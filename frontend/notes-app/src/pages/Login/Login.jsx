@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar/Navbar";
 import PasswordInput from "../../components/Input/PasswordInput";
 import axiosInstance from "../../utils/axiosInstance";
@@ -10,7 +10,17 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  // Handle Google OAuth redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      localStorage.setItem("token", token);
+      navigate("/dashboard");
+    }
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -25,7 +35,7 @@ const Login = () => {
       return;
     }
 
-    setError('')
+    setError("");
 
     //Login API Call
 
@@ -34,13 +44,12 @@ const Login = () => {
         email: email,
         password: password,
       });
-      
-      // Handle successful login response 
-      if(response.data && response.data.accessToken){
-        localStorage.setItem("token", response.data.accessToken)
-        navigate('/dashboard')
-      }
 
+      // Handle successful login response
+      if (response.data && response.data.accessToken) {
+        localStorage.setItem("token", response.data.accessToken);
+        navigate("/dashboard");
+      }
     } catch (error) {
       // Handle login error
       if (error.response && error.response.data && error.response.data.message) {
@@ -51,6 +60,11 @@ const Login = () => {
     }
   };
 
+  // Add this function for Google login
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:8000/auth/google";
+  };
+
   return (
     <>
       <Navbar />
@@ -59,26 +73,28 @@ const Login = () => {
           <form onSubmit={handleLogin}>
             <h4 className="text-2xl mb-7">Login</h4>
 
-            <input 
-              type="text" 
-              placeholder="Email" 
-              className="input-box" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)} />
+            <input type="text" placeholder="Email" className="input-box" value={email} onChange={(e) => setEmail(e.target.value)} />
 
-            <PasswordInput 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} />
 
             {error && <p className="text-red-500 text-xs pb-1">{error}</p>}
 
-            <button type="submit" className="btn-primary">Login</button>
+            <button type="submit" className="btn-primary">
+              Login
+            </button>
 
             <p className="text-sm text-center mt-4">
-              Not registered yet? <Link to='/signUp' className="font-medium text-primary underline">Create an Account</Link>
+              Not registered yet?{" "}
+              <Link to="/signUp" className="font-medium text-primary underline">
+                Create an Account
+              </Link>
             </p>
           </form>
+
+          {/* Google Login Button */}
+          <button className="w-full mt-4 bg-[#4285F4] text-white py-2 rounded font-medium hover:bg-[#357ae8] transition" onClick={handleGoogleLogin} type="button">
+            Login with Google
+          </button>
         </div>
       </div>
     </>

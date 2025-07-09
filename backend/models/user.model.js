@@ -6,6 +6,9 @@ const userSchema = new Schema({
   email: { type: String },
   password: { type: String },
   createdOn: { type: Date, default: new Date().getTime() },
+  googleId: { type: String }, // google authentication ID
+  isVerified: { type: Boolean, default: false }, // email verification status
+  verificationToken: { type: String },
 });
 
 module.exports = mongoose.model("User", userSchema);
