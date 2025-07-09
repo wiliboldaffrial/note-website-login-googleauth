@@ -13,10 +13,11 @@ import EmptyCard from "../../components/EmptyCard/EmptyCard";
 
 const Home = () => {
   const [allNotes, setAllNotes] = useState([]);
-
   const [isSearch, setIsSearch] = useState(false);
-
   const [userInfo, setUserInfo] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(18);
+  const [totalPages, setTotalPages] = useState(1);
 
   const navigate = useNavigate();
 
@@ -54,10 +55,16 @@ const Home = () => {
   // Get all notes
   const getAllNotes = async () => {
     try {
-      const response = await axiosInstance.get("/get-all-notes");
+      const response = await axiosInstance.get("/get-all-notes", {
+        params: {
+          page: page,
+          limit,
+        },
+      });
 
       if (response.data && response.data.notes) {
         setAllNotes(response.data.notes);
+        setTotalPages(response.data.totalPages || 1);
       }
     } catch (error) {
       console.log("An unexpected error occurred. Please try again.");
@@ -136,10 +143,9 @@ const Home = () => {
   };
 
   useEffect(() => {
-    getAllNotes();
+    getAllNotes(page);
     getUserInfo();
-    return () => {};
-  }, []);
+  }, [page, limit]);
 
   return (
     <>
@@ -182,6 +188,28 @@ const Home = () => {
           thoughts, ideas, and reminders. Let's get started!`
             }
           />
+        )}
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+            <div className="flex justify-center items-center mt-6 gap-4">
+            <button
+              className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+            >
+              Prev
+            </button>
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <button
+              className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+              disabled={page === totalPages}
+              onClick={() => setPage(page + 1)}
+            >
+              Next
+            </button>
+          </div>
         )}
       </div>
 

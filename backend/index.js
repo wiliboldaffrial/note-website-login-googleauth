@@ -239,13 +239,23 @@ app.put("/update-note-pinned/:noteId", authenticateToken, async (req, res) => {
 // Get all Notes
 app.get("/get-all-notes", authenticateToken, async (req, res) => {
   const { user } = req.user;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 18;
 
   try {
-    const notes = await Note.find({ userId: user._id }).sort({ isPinned: -1 });
+    const total = await Note.countDocuments({ userId: user._id });
+    const notes = await Note.find({ userId: user._id })
+      .sort({ isPinned: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
 
     return res.json({
       error: false,
       notes,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
       message: "All notes retrieved successfully",
     });
   } catch (error) {
