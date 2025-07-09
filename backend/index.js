@@ -13,6 +13,11 @@ const app = express();
 
 const jwt = require("jsonwebtoken");
 const { authenticateToken } = require("./utilities");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const session = require("express-session");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 app.use(express.json());
 
@@ -21,6 +26,39 @@ app.use(
     origin: "*",
   })
 );
+
+app.use(session({ secret: "your_secret", resave: false, saveUninitialized: true }));
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "/auth/google/callback",
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      let user = await User.findOne({ googleId: profile.id });
+      if (!user) {
+        user = await User.create({
+          fullName: profile.displayName,
+          email: profile.emails[0].value,
+          googleId: profile.id,
+        });
+      }
+      return done(null, user);
+    }
+  )
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+passport.deserializeUser(async (id, done) => {
+  const user = await User.findById(id);
+  done(null, user);
+});
 
 app.get("/", (req, res) => {
   res.json({ data: "hello" });
@@ -31,47 +69,56 @@ app.post("/create-account", async (req, res) => {
   const { fullName, email, password } = req.body;
 
   if (!fullName) {
-    return res
-      .status(400)
-      .json({ error: true, message: "Full Name is required" });
+    return res.status(400).json({ error: true, message: "Full Name is required" });
   }
-
   if (!email) {
     return res.status(400).json({ error: true, message: "Email is required" });
   }
-
   if (!password) {
-    return res
-      .status(400)
-      .json({ error: true, message: "Password is required" });
+    return res.status(400).json({ error: true, message: "Password is required" });
   }
 
   const isUser = await User.findOne({ email: email });
-
   if (isUser) {
-    return res.json({
-      error: true,
-      message: "User already exist",
-    });
+    return res.json({ error: true, message: "User already exist" });
   }
+
+  // Generate verification token
+  const verificationToken = crypto.randomBytes(32).toString("hex");
 
   const user = new User({
     fullName,
     email,
     password,
+    isVerified: false,
+    verificationToken,
   });
 
   await user.save();
 
-  const accessToken = jwt.sign({ user }, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: "36000m",
+  // Send verification email
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const verifyUrl = `http://localhost:8000/verify-email?token=${verificationToken}`;
+
+  await transporter.sendMail({
+    from: `"Notes App" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Verify your email",
+    html: `<p>Hi ${fullName},</p>
+      <p>Please verify your email by clicking the link below:</p>
+      <a href="${verifyUrl}">Verify Email</a>`,
   });
 
   return res.json({
     error: false,
-    user,
-    accessToken,
-    message: "Registration Successful",
+    message: "Registration successful! Please check your email to verify your account.",
   });
 });
 
@@ -91,6 +138,9 @@ app.post("/login", async (req, res) => {
 
   if (!userInfo) {
     return res.status(400).json({ message: "User not found" });
+  }
+  if (!userInfo.isVerified) {
+    return res.status(400).json({ message: "Please verify your email before logging in." });
   }
 
   if (userInfo.email == email && userInfo.password == password) {
@@ -139,9 +189,7 @@ app.post("/add-note", authenticateToken, async (req, res) => {
   }
 
   if (!content) {
-    return res
-      .status(400)
-      .json({ error: true, message: "Content is required" });
+    return res.status(400).json({ error: true, message: "Content is required" });
   }
 
   try {
@@ -174,9 +222,7 @@ app.put("/edit-note/:noteId", authenticateToken, async (req, res) => {
   const { user } = req.user;
 
   if (!title && !content && !tags) {
-    return res
-      .status(400)
-      .json({ error: true, message: "No changes provided" });
+    return res.status(400).json({ error: true, message: "No changes provided" });
   }
 
   try {
@@ -298,9 +344,7 @@ app.get("/search-notes", authenticateToken, async (req, res) => {
   const { query } = req.query;
 
   if (!query) {
-    return res
-      .status(400)
-      .json({ error: true, message: "Search query is required" });
+    return res.status(400).json({ error: true, message: "Search query is required" });
   }
 
   try {
@@ -323,6 +367,29 @@ app.get("/search-notes", authenticateToken, async (req, res) => {
       message: "Internal Server Error",
     });
   }
+});
+
+app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+app.get("/auth/google/callback", passport.authenticate("google", { failureRedirect: "/" }), (req, res) => {
+  // Generate JWT for the user
+  const accessToken = jwt.sign({ user: req.user }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "36000m",
+  });
+  // You can redirect to frontend with token as query param
+  res.redirect(`http://localhost:5173/login?token=${accessToken}`);
+});
+
+app.get("/verify-email", async (req, res) => {
+  const { token } = req.query;
+  const user = await User.findOne({ verificationToken: token });
+  if (!user) {
+    return res.status(400).send("Invalid or expired verification link.");
+  }
+  user.isVerified = true;
+  user.verificationToken = undefined;
+  await user.save();
+  res.send("Email verified successfully! You can now log in.");
 });
 
 app.listen(8000);
