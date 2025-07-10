@@ -57,9 +57,12 @@ const Home = () => {
   const indexOfLastNote = currentPage * notesPerPage;
   const indexOfFirstNote = indexOfLastNote - notesPerPage;
   const currentNotes = allNotes.slice(indexOfFirstNote, indexOfLastNote);
-
   const [isSearch, setIsSearch] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(18);
+  const [totalPages, setTotalPages] = useState(1);
+
   const navigate = useNavigate();
   const [openAddEditModal, setOpenAddEditModal] = useState({
     isShown: false,
@@ -94,9 +97,16 @@ const Home = () => {
 
   const getAllNotes = async () => {
     try {
-      const response = await axiosInstance.get("/get-all-notes");
+      const response = await axiosInstance.get("/get-all-notes", {
+        params: {
+          page: page,
+          limit,
+        },
+      });
+
       if (response.data && response.data.notes) {
         setAllNotes(response.data.notes);
+        setTotalPages(response.data.totalPages || 1);
       }
     } catch (error) {
       console.log("An unexpected error occurred. Please try again.");
@@ -171,9 +181,9 @@ const Home = () => {
   };
 
   useEffect(() => {
-    getAllNotes();
+    getAllNotes(page);
     getUserInfo();
-  }, []);
+  }, [page, limit]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -225,6 +235,28 @@ const Home = () => {
                 : `Start creating your first note! Click the 'Add' button to jot down your thoughts, ideas, and reminders. Let's get started!`
             }
           />
+        )}
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+            <div className="flex justify-center items-center mt-6 gap-4">
+            <button
+              className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+            >
+              Prev
+            </button>
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <button
+              className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+              disabled={page === totalPages}
+              onClick={() => setPage(page + 1)}
+            >
+              Next
+            </button>
+          </div>
         )}
       </div>
 
