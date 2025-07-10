@@ -198,12 +198,12 @@ app.post("/add-note", authenticateToken, upload.single("image"), async (req, res
 
   try {
     const note = new Note({
-  title,
-  content,
-  tags: tags ? JSON.parse(tags) : [],
-  userId: user._id,
-  image,
-});
+      title,
+      content,
+      tags: Array.isArray(tags) ? tags : tags ? JSON.parse(tags) : [],
+      userId: user._id,
+      image,
+    });
 
     await note.save();
 
@@ -241,7 +241,7 @@ app.put("/edit-note/:noteId", authenticateToken, upload.single("image"), async (
 
     if (title) note.title = title;
     if (content) note.content = content;
-    if (tags) note.tags = JSON.parse(tags);
+    if (tags) note.tags = Array.isArray(tags) ? tags : JSON.parse(tags);
     if (typeof isPinned === "boolean") note.isPinned = isPinned;
     if (image) note.image = image;
 
@@ -313,6 +313,7 @@ app.get("/get-all-notes", authenticateToken, async (req, res) => {
       message: "All notes retrieved successfully",
     });
   } catch (error) {
+    console.log("Error in /get-all-notes:", error);
     return res.status(500).json({
       error: true,
       message: "Internal Server Error",

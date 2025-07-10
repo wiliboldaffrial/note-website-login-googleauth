@@ -19,7 +19,6 @@ const NoteCard = ({ title, date, content, tags, isPinned, image, onEdit, onDelet
         />
       </div>
 
-      {/* Image preview */}
       {image && (
         <img
           src={`data:image/*;base64,${image}`}

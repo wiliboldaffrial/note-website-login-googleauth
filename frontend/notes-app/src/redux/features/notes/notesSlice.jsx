@@ -3,9 +3,9 @@ import axiosInstance from '../../../utils/axiosInstance';
 import axios from 'axios';
 
 // async thunk to get all notes
-export const fetchNotes = createAsyncThunk('/notes/fetchNotes', async () => {
-    const response = await axiosInstance.get('/get-all-notes');
-    return response.data.notes;
+export const fetchNotes = createAsyncThunk('/notes/fetchNotes', async ({ page=1, limit=16 }) => {
+    const response = await axiosInstance.get('/get-all-notes', { params: { page, limit }});
+    return response.data; // Return the whole response object
 });
 
 export const deleteNote = createAsyncThunk('/notes/deleteNote', async (noteId, thunkAPI) => {
@@ -23,12 +23,19 @@ export const searchNotes = createAsyncThunk('/notes/searchNotes', async (query) 
 });
 
 // add edit notes thunks
-export const addNote = createAsyncThunk('/notes/addNote', async ({title, content, tags}, thunkAPI) => {
+export const addNote = createAsyncThunk('/notes/addNote', async ({title, content, tags, image}, thunkAPI) => {
     try {
-        const response = await axiosInstance.post('/add-note', {
-            title, 
-            content,
-            tags,
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('content', content);
+        formData.append('tags', JSON.stringify(tags));
+        if (image) {
+            formData.append('image', image);
+        }
+        const response = await axiosInstance.post('/add-note', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
         });
         return response.data.note;
     } catch (error) {
@@ -38,12 +45,19 @@ export const addNote = createAsyncThunk('/notes/addNote', async ({title, content
     }
 });
 
-export const editNote = createAsyncThunk('/notes/editNote', async ({id, title, content, tags}, thunkAPI) => {
+export const editNote = createAsyncThunk('/notes/editNote', async ({id, title, content, tags, image}, thunkAPI) => {
     try {
-        const response = await axiosInstance.put(`/edit-note/${id}`, {
-            title,
-            content,
-            tags,
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('content', content);
+        formData.append('tags', JSON.stringify(tags));
+        if (image) {
+            formData.append('image', image);
+        }
+        const response = await axiosInstance.put(`/edit-note/${id}`,formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
         });
         return response.data.note;
     } catch (error) {
@@ -79,6 +93,7 @@ const notesSlice = createSlice({
         allNotes: [],
         status: 'idle',
         error: null,
+        totalPages: 1,
     },
     reducers: {
         clearSearch: (state) => {
@@ -92,7 +107,8 @@ const notesSlice = createSlice({
         })
         .addCase(fetchNotes.fulfilled, (state, action) => {
             state.status = 'succeeded';
-            state.allNotes = action.payload;
+            state.allNotes = action.payload.notes;
+            state.totalPages = action.payload.totalPages;
             state.isSearch = true;
         })
         .addCase(fetchNotes.rejected, (state, action) => {

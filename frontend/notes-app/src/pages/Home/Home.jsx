@@ -54,28 +54,22 @@ import { fetchNotes, deleteNote, togglePin, searchNotes, clearSearch } from "../
 import { fetchUser } from "../../redux/features/notes/userSlice";
 
 const Home = () => {
-  //const [allNotes, setAllNotes] = useState([]);
-  //const [isSearch, setIsSearch] = useState(false);
-  //const [userInfo, setUserInfo] = useState(null);
-  const [allNotes, setAllNotes] = useState([]);
+  const dispatch = useDispatch();
+  const allNotes = useSelector((state) => state.notes.allNotes) || [];
+  const isSearch = useSelector((state) => state.notes.isSearch);
+  const userInfo = useSelector((state) => state.notes.userInfo);
+
   const [currentPage, setCurrentPage] = useState(1);
   const notesPerPage = 16;
 
   const indexOfLastNote = currentPage * notesPerPage;
   const indexOfFirstNote = indexOfLastNote - notesPerPage;
   const currentNotes = allNotes.slice(indexOfFirstNote, indexOfLastNote);
-  const [isSearch, setIsSearch] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
   const [page, setPage] = useState(1);
-  const [limit] = useState(18);
-  const [totalPages, setTotalPages] = useState(1);
+  const [limit] = useState(16);
+  const totalPages = useSelector((state) => state.notes.totalPages);
 
   const navigate = useNavigate();
-
-  const dispatch = useDispatch();
-  const allNotes = useSelector((state) => state.notes.allNotes);
-  const isSearch = useSelector((state) => state.notes.isSearch);
-  const userInfo = useSelector((state) => state.notes.userInfo);
 
   const [openAddEditModal, setOpenAddEditModal] = useState({
     isShown: false,
@@ -148,6 +142,7 @@ const Home = () => {
 
   const handlePinToggle = async (note) => {
     dispatch(togglePin(note));
+    dispatch(fetchNotes({page, limit}));
     showToastMessage("Note Updated Successfully", "update");
   };
 
@@ -224,10 +219,14 @@ const Home = () => {
 */
 
   useEffect(() => {
-    dispatch(fetchNotes()); 
+    dispatch(fetchNotes({page, limit})); 
     dispatch(fetchUser()); 
     
-  }, [dispatch]);
+  }, [dispatch, page, limit]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [allNotes]);
 
   return (
     <>
@@ -238,43 +237,89 @@ const Home = () => {
       />
 
       <div className="container mx-auto">
-        {isSearch && (
-          <h3 className="text-lg font-medium mt-5">Search Results</h3>
-        )}
-
-        {Array.isArray(allNotes) && allNotes.length > 0 ? (
-          <div className="grid grid-cols-3 gap-4 mt-8">
-            {allNotes.map((item) => {
-              return (
-                <NoteCard
-                  key={item._id}
-                  title={item.title}
-                  content={item.content}
-                  date={item.createdOn}
-                  tags={item.tags}
-                  isPinned={item.isPinned}
-                  onEdit={() => handleEdit(item)}
-                  onDelete={() => handleDelete(item)}
-                  onPinNote={() => handlePinToggle(item)}
-                />
-              );
-            })}
-          </div>
+        {isSearch ? (
+          <>
+            <h3 className="text-lg font-medium mt-5">Search Results</h3>
+            {currentNotes.length > 0 ? (
+              <div className="grid grid-cols-3 gap-4 mt-8">
+                {currentNotes.map((item) => (
+                  <NoteCard
+                    key={item._id}
+                    title={item.title}
+                    content={item.content}
+                    date={item.createdOn}
+                    tags={item.tags}
+                    isPinned={item.isPinned}
+                    image={item.image}
+                    onEdit={() => handleEdit(item)}
+                    onDelete={() => handleDelete(item)}
+                    onPinNote={() => handlePinToggle(item)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyCard
+                imgSrc={NoDataImg}
+                message="Oops! No notes found matching your search."
+              />
+            )}
+          </>
         ) : (
-          <EmptyCard
-            imgSrc={isSearch ? NoDataImg : AddNotesImg}
-            message={
-              isSearch
-                ? `Oops! No notes found matching your search.`
-                : `Start creating your first note! Click the 'Add' button to jot down your
-          thoughts, ideas, and reminders. Let's get started!`
-            }
-          />
+          <>
+            <h3 className="text-lg font-medium mt-5">All Notes</h3>
+            {currentNotes.length > 0 ? (
+              <div className="grid grid-cols-3 gap-4 mt-8">
+                {currentNotes.map((item) => (
+                  <NoteCard
+                    key={item._id}
+                    title={item.title}
+                    content={item.content}
+                    date={item.createdOn}
+                    tags={item.tags}
+                    isPinned={item.isPinned}
+                    image={item.image}
+                    onEdit={() => handleEdit(item)}
+                    onDelete={() => handleDelete(item)}
+                    onPinNote={() => handlePinToggle(item)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyCard
+                imgSrc={AddNotesImg}
+                message="Start creating your first note! Click the 'Add' button to jot down your thoughts, ideas, and reminders. Let's get started!"
+              />
+            )}
+          </>
         )}
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-8">
+            <div className="inline-flex items-center gap-2 bg-white rounded-lg shadow px-4 py-2">
+              <button
+                className="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 transition disabled:opacity-50"
+                disabled={page === 1}
+                onClick={() => setPage(page - 1)}
+              >
+                Prev
+              </button>
+              <span className="text-sm font-medium text-gray-700">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                className="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 transition disabled:opacity-50"
+                disabled={page === totalPages}
+                onClick={() => setPage(page + 1)}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+        
       </div>
 
       <button
-        className="w-16 h-16 flex items-center justify-center rounded-2xl bg-primary hover:bg-blue-600 absolute right-10 bottom-10"
+        className="w-16 h-16 flex items-center justify-center rounded-2xl bg-primary hover:bg-blue-600 fixed right-10 bottom-10"
         onClick={() => {
           setOpenAddEditModal({ isShown: true, type: "add", data: null });
         }}
