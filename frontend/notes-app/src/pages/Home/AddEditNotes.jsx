@@ -62,6 +62,8 @@ const AddEditNotes = ({
       if (response.data && response.data.note) {
         showToastMessage("Note Updated Successfully", 'update');
         dispatch(fetchNotes());
+        showToastMessage("Note Updated Successfully", "update");
+        getAllNotes();
         onClose();
       }
     } catch (error) {
@@ -91,10 +93,10 @@ const AddEditNotes = ({
 
     setError("");
 
-    if(type === 'edit'){
-      editNote()
-    }else {
-      addNewNote()
+    if (type === "edit") {
+      editNote();
+    } else {
+      addNewNote();
     }
   };
   */
@@ -173,6 +175,14 @@ const AddEditNotes = ({
       >
        {type === 'add' ?  "ADD" : "Update"}
       </button>
+      <div className="mt-4 sticky bottom-0 bg-white pt-3 pb-2">
+        <button
+          className="btn-primary font-medium w-full py-3"
+          onClick={handleAddNote}
+        >
+          {type === "add" ? "ADD" : "Update"}
+        </button>
+      </div>
     </div>
   );
 };

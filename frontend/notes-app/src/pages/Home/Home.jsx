@@ -11,6 +11,44 @@ import AddNotesImg from "../../assets/images/add-notes.svg";
 import NoDataImg from "../../assets/images/no-data.svg";
 import EmptyCard from "../../components/EmptyCard/EmptyCard";
 
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages <= 1) return null;
+
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+  return (
+    <div className="flex justify-center mt-6 space-x-2 items-center">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="px-3 py-1 border rounded bg-white text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+      >
+        &larr;
+      </button>
+      {pages.map((num) => (
+        <button
+          key={num}
+          onClick={() => onPageChange(num)}
+          className={`px-4 py-2 border rounded ${
+            currentPage === num
+              ? "bg-blue-600 text-white"
+              : "bg-white text-blue-600 hover:bg-blue-100"
+          }`}
+        >
+          {num}
+        </button>
+      ))}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="px-3 py-1 border rounded bg-white text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+      >
+        &rarr;
+      </button>
+    </div>
+  );
+};
+
 import {useDispatch, useSelector} from 'react-redux';
 import { fetchNotes, deleteNote, togglePin, searchNotes, clearSearch } from "../../redux/features/notes/notesSlice";
 import { fetchUser } from "../../redux/features/notes/userSlice";
@@ -19,6 +57,19 @@ const Home = () => {
   //const [allNotes, setAllNotes] = useState([]);
   //const [isSearch, setIsSearch] = useState(false);
   //const [userInfo, setUserInfo] = useState(null);
+  const [allNotes, setAllNotes] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const notesPerPage = 16;
+
+  const indexOfLastNote = currentPage * notesPerPage;
+  const indexOfFirstNote = indexOfLastNote - notesPerPage;
+  const currentNotes = allNotes.slice(indexOfFirstNote, indexOfLastNote);
+  const [isSearch, setIsSearch] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(18);
+  const [totalPages, setTotalPages] = useState(1);
+
   const navigate = useNavigate();
 
   const dispatch = useDispatch();

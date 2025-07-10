@@ -8,6 +8,7 @@ const noteSchema = new Schema({
   isPinned: { type: Boolean, default: false },
   userId: { type: String, required: true },
   createdOn: { type: Date, default: new Date().getTime() },
+  image: { type: String, default: null }
 });
 
 module.exports = mongoose.model("Note", noteSchema);
