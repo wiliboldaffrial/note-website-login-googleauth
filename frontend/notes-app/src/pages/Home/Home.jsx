@@ -11,15 +11,56 @@ import AddNotesImg from "../../assets/images/add-notes.svg";
 import NoDataImg from "../../assets/images/no-data.svg";
 import EmptyCard from "../../components/EmptyCard/EmptyCard";
 
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages <= 1) return null;
+
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+  return (
+    <div className="flex justify-center mt-6 space-x-2 items-center">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="px-3 py-1 border rounded bg-white text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+      >
+        &larr;
+      </button>
+      {pages.map((num) => (
+        <button
+          key={num}
+          onClick={() => onPageChange(num)}
+          className={`px-4 py-2 border rounded ${
+            currentPage === num
+              ? "bg-blue-600 text-white"
+              : "bg-white text-blue-600 hover:bg-blue-100"
+          }`}
+        >
+          {num}
+        </button>
+      ))}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="px-3 py-1 border rounded bg-white text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+      >
+        &rarr;
+      </button>
+    </div>
+  );
+};
+
 const Home = () => {
   const [allNotes, setAllNotes] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const notesPerPage = 16;
+
+  const indexOfLastNote = currentPage * notesPerPage;
+  const indexOfFirstNote = indexOfLastNote - notesPerPage;
+  const currentNotes = allNotes.slice(indexOfFirstNote, indexOfLastNote);
 
   const [isSearch, setIsSearch] = useState(false);
-
   const [userInfo, setUserInfo] = useState(null);
-
   const navigate = useNavigate();
-
   const [openAddEditModal, setOpenAddEditModal] = useState({
     isShown: false,
     type: "add",
@@ -51,11 +92,9 @@ const Home = () => {
     });
   };
 
-  // Get all notes
   const getAllNotes = async () => {
     try {
       const response = await axiosInstance.get("/get-all-notes");
-
       if (response.data && response.data.notes) {
         setAllNotes(response.data.notes);
       }
@@ -64,12 +103,10 @@ const Home = () => {
     }
   };
 
-  // Delete Note
   const deleteNote = async (data) => {
     const noteId = data._id;
     try {
       const response = await axiosInstance.delete("/delete-note/" + noteId);
-
       if (response.data && !response.data.error) {
         showToastMessage("Note Deleted Successfully", "delete");
         getAllNotes();
@@ -79,7 +116,6 @@ const Home = () => {
     }
   };
 
-  // Get User Info
   const getUserInfo = async () => {
     try {
       const response = await axiosInstance.get("/get-user");
@@ -94,7 +130,6 @@ const Home = () => {
     }
   };
 
-  // Search for a Note
   const onSearchNote = async (query) => {
     try {
       const response = await axiosInstance.get("/search-notes", {
@@ -138,8 +173,11 @@ const Home = () => {
   useEffect(() => {
     getAllNotes();
     getUserInfo();
-    return () => {};
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [allNotes]);
 
   return (
     <>
@@ -154,10 +192,10 @@ const Home = () => {
           <h3 className="text-lg font-medium mt-5">Search Results</h3>
         )}
 
-        {allNotes.length > 0 ? (
-          <div className="grid grid-cols-3 gap-4 mt-8">
-            {allNotes.map((item) => {
-              return (
+        {currentNotes.length > 0 ? (
+          <>
+            <div className="grid grid-cols-3 gap-4 mt-8">
+              {currentNotes.map((item) => (
                 <NoteCard
                   key={item._id}
                   title={item.title}
@@ -165,21 +203,26 @@ const Home = () => {
                   date={item.createdOn}
                   tags={item.tags}
                   isPinned={item.isPinned}
+                  image={item.image}
                   onEdit={() => handleEdit(item)}
                   onDelete={() => deleteNote(item)}
                   onPinNote={() => updateIsPinned(item)}
                 />
-              );
-            })}
-          </div>
+              ))}
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(allNotes.length / notesPerPage)}
+              onPageChange={setCurrentPage}
+            />
+          </>
         ) : (
           <EmptyCard
             imgSrc={isSearch ? NoDataImg : AddNotesImg}
             message={
               isSearch
                 ? `Oops! No notes found matching your search.`
-                : `Start creating your first note! Click the 'Add' button to jot down your
-          thoughts, ideas, and reminders. Let's get started!`
+                : `Start creating your first note! Click the 'Add' button to jot down your thoughts, ideas, and reminders. Let's get started!`
             }
           />
         )}
@@ -202,7 +245,7 @@ const Home = () => {
             backgroundColor: "rgba(0,0,0,0.2)",
           },
         }}
-        contentLabel="Example Modal"
+        contentLabel="Add/Edit Note Modal"
         className="w-[40%] max-h-3/4 bg-white rounded-md mx-auto mt-14 p-5 overflow-scroll"
       >
         <AddEditNotes

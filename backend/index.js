@@ -14,6 +14,9 @@ const app = express();
 const jwt = require("jsonwebtoken");
 const { authenticateToken } = require("./utilities");
 
+const multer = require("multer");
+const upload = multer({ storage: multer.memoryStorage() });
+
 app.use(express.json());
 
 app.use(
@@ -130,9 +133,10 @@ app.get("/get-user", authenticateToken, async (req, res) => {
 });
 
 // Add Note
-app.post("/add-note", authenticateToken, async (req, res) => {
+app.post("/add-note", authenticateToken, upload.single("image"), async (req, res) => {
   const { title, content, tags } = req.body;
   const { user } = req.user;
+  const image = req.file ? req.file.buffer.toString("base64") : null;
 
   if (!title) {
     return res.status(400).json({ error: true, message: "Title is required" });
@@ -146,11 +150,12 @@ app.post("/add-note", authenticateToken, async (req, res) => {
 
   try {
     const note = new Note({
-      title,
-      content,
-      tags: tags || [],
-      userId: user._id,
-    });
+  title,
+  content,
+  tags: tags ? JSON.parse(tags) : [],
+  userId: user._id,
+  image,
+});
 
     await note.save();
 
@@ -168,7 +173,7 @@ app.post("/add-note", authenticateToken, async (req, res) => {
 });
 
 // Edit Note
-app.put("/edit-note/:noteId", authenticateToken, async (req, res) => {
+app.put("/edit-note/:noteId", authenticateToken, upload.single("image"), async (req, res) => {
   const noteId = req.params.noteId;
   const { title, content, tags, isPinned } = req.body;
   const { user } = req.user;
@@ -186,10 +191,13 @@ app.put("/edit-note/:noteId", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: true, message: "Note not found" });
     }
 
+    const image = req.file ? req.file.buffer.toString("base64") : null;
+
     if (title) note.title = title;
     if (content) note.content = content;
-    if (tags) note.tags = tags;
-    if (isPinned) note.isPinned = isPinned;
+    if (tags) note.tags = JSON.parse(tags);
+    if (typeof isPinned === "boolean") note.isPinned = isPinned;
+    if (image) note.image = image;
 
     await note.save();
 
