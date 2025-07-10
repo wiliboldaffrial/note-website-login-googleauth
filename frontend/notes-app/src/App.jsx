@@ -4,9 +4,12 @@ import Home from "./pages/Home/Home";
 import Login from "./pages/Login/Login";
 import SignUp from "./pages/SignUp/SignUp";
 
+import {Provider} from 'react-redux';
+import {store} from './redux/store';
+
 function App() {
   return (
-    <div>
+    <Provider store={store}>
       <Router>
         <Routes>
           <Route path="/" element={<Root />} />
@@ -15,7 +18,7 @@ function App() {
           <Route path="/signUp" exact element={<SignUp />} />
         </Routes>
       </Router>
-    </div>
+    </Provider>
   );
 }
 

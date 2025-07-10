@@ -3,20 +3,26 @@ import TagInput from "../../components/Input/TagInput";
 import { MdClose } from "react-icons/md";
 import axiosInstance from "../../utils/axiosInstance";
 
+import { useDispatch } from "react-redux";
+import { fetchNotes, addNote, editNote } from "../../redux/features/notes/notesSlice";
+
 const AddEditNotes = ({
   noteData,
   type,
   onClose,
   showToastMessage,
-  getAllNotes,
 }) => {
+
+  const dispatch = useDispatch();
+
   const [title, setTitle] = useState(noteData?.title || "");
   const [content, setContent] = useState(noteData?.content || "");
   const [tags, setTags] = useState(noteData?.tags || []);
 
   const [error, setError] = useState(null);
 
-  const addNewNote = async () => {
+  /*
+  const addNote = async () => {
     try {
       const response = await axiosInstance.post("/add-note", {
         title,
@@ -26,7 +32,7 @@ const AddEditNotes = ({
 
       if (response.data && response.data.note) {
         showToastMessage("Note Added Successfully");
-        getAllNotes();
+        dispatch(fetchNotes());
         onClose();
       }
     } catch (error) {
@@ -41,7 +47,8 @@ const AddEditNotes = ({
       }
     }
   };
-
+  
+  
   const editNote = async () => {
     const noteId = noteData._id
 
@@ -54,7 +61,7 @@ const AddEditNotes = ({
 
       if (response.data && response.data.note) {
         showToastMessage("Note Updated Successfully", 'update');
-        getAllNotes();
+        dispatch(fetchNotes());
         onClose();
       }
     } catch (error) {
@@ -69,7 +76,8 @@ const AddEditNotes = ({
       }
     }
   };
-
+  */
+ /*
   const handleAddNote = () => {
     if (!title) {
       setError("Please enter the title");
@@ -89,6 +97,36 @@ const AddEditNotes = ({
       addNewNote()
     }
   };
+  */
+
+  const handleAddOrEdit = async () => {
+    if (!title) return setError("Please enter the title");
+    if (!content) return setError("Please enter the content");
+
+    setError("");
+
+    try {
+      if (type === 'edit') {
+        await dispatch(
+          editNote({ id: noteData._id, title, content, tags })
+        ).unwrap();
+        showToastMessage("Note Updated Successfully", 'update');
+      } else {
+        await dispatch(
+          addNote({ title, content, tags })
+        ).unwrap();
+        showToastMessage("Note Added Successfully");
+      }
+
+      //dispatch(fetchNotes());
+      onClose();
+
+    } catch (error) {
+      setError(error?.message || String(error));;
+    }
+
+  }
+    
 
   return (
     <div className="relative">
@@ -131,7 +169,7 @@ const AddEditNotes = ({
 
       <button
         className="btn-primary font-medium mt-5 p-3"
-        onClick={handleAddNote}
+        onClick={handleAddOrEdit}
       >
        {type === 'add' ?  "ADD" : "Update"}
       </button>

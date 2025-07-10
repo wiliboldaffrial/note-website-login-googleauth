@@ -11,14 +11,20 @@ import AddNotesImg from "../../assets/images/add-notes.svg";
 import NoDataImg from "../../assets/images/no-data.svg";
 import EmptyCard from "../../components/EmptyCard/EmptyCard";
 
+import {useDispatch, useSelector} from 'react-redux';
+import { fetchNotes, deleteNote, togglePin, searchNotes, clearSearch } from "../../redux/features/notes/notesSlice";
+import { fetchUser } from "../../redux/features/notes/userSlice";
+
 const Home = () => {
-  const [allNotes, setAllNotes] = useState([]);
-
-  const [isSearch, setIsSearch] = useState(false);
-
-  const [userInfo, setUserInfo] = useState(null);
-
+  //const [allNotes, setAllNotes] = useState([]);
+  //const [isSearch, setIsSearch] = useState(false);
+  //const [userInfo, setUserInfo] = useState(null);
   const navigate = useNavigate();
+
+  const dispatch = useDispatch();
+  const allNotes = useSelector((state) => state.notes.allNotes);
+  const isSearch = useSelector((state) => state.notes.isSearch);
+  const userInfo = useSelector((state) => state.notes.userInfo);
 
   const [openAddEditModal, setOpenAddEditModal] = useState({
     isShown: false,
@@ -51,7 +57,8 @@ const Home = () => {
     });
   };
 
-  // Get all notes
+  // Get all notes 
+  /*
   const getAllNotes = async () => {
     try {
       const response = await axiosInstance.get("/get-all-notes");
@@ -63,8 +70,10 @@ const Home = () => {
       console.log("An unexpected error occurred. Please try again.");
     }
   };
+  */
 
-  // Delete Note
+  // Delete 
+  /*
   const deleteNote = async (data) => {
     const noteId = data._id;
     try {
@@ -78,8 +87,30 @@ const Home = () => {
       console.log("An unexpected error occurred. Please try again.");
     }
   };
+  */
+
+  //updated deleteNoteHandler
+  const handleDelete = async (note) => {
+    dispatch(deleteNote(note._id));
+    showToastMessage("Note deleted successfully", "delete");
+  };
+
+  const handlePinToggle = async (note) => {
+    dispatch(togglePin(note));
+    showToastMessage("Note Updated Successfully", "update");
+  };
+
+  const handleSearch = (query) => {
+    dispatch(searchNotes(query));
+  };
+
+  const handleClearSearch = () => {
+    dispatch(clearSearch());
+    dispatch(fetchNotes());
+  }
 
   // Get User Info
+  /*
   const getUserInfo = async () => {
     try {
       const response = await axiosInstance.get("/get-user");
@@ -93,8 +124,10 @@ const Home = () => {
       }
     }
   };
+  */
 
   // Search for a Note
+  /*
   const onSearchNote = async (query) => {
     try {
       const response = await axiosInstance.get("/search-notes", {
@@ -109,7 +142,8 @@ const Home = () => {
       console.log("An unexpected error occurred. Please try again.");
     }
   };
-
+  */
+/*
   const updateIsPinned = async (noteData) => {
     const noteId = noteData._id;
 
@@ -129,23 +163,26 @@ const Home = () => {
       console.log("An unexpected error occurred. Please try again.");
     }
   };
+*/
 
+/*
   const handleClearSearch = () => {
     setIsSearch(false);
     getAllNotes();
   };
+*/
 
   useEffect(() => {
-    getAllNotes();
-    getUserInfo();
-    return () => {};
-  }, []);
+    dispatch(fetchNotes()); 
+    dispatch(fetchUser()); 
+    
+  }, [dispatch]);
 
   return (
     <>
       <Navbar
         userInfo={userInfo}
-        onSearchNote={onSearchNote}
+        onSearchNote={handleSearch}
         handleClearSearch={handleClearSearch}
       />
 
@@ -154,7 +191,7 @@ const Home = () => {
           <h3 className="text-lg font-medium mt-5">Search Results</h3>
         )}
 
-        {allNotes.length > 0 ? (
+        {Array.isArray(allNotes) && allNotes.length > 0 ? (
           <div className="grid grid-cols-3 gap-4 mt-8">
             {allNotes.map((item) => {
               return (
@@ -166,8 +203,8 @@ const Home = () => {
                   tags={item.tags}
                   isPinned={item.isPinned}
                   onEdit={() => handleEdit(item)}
-                  onDelete={() => deleteNote(item)}
-                  onPinNote={() => updateIsPinned(item)}
+                  onDelete={() => handleDelete(item)}
+                  onPinNote={() => handlePinToggle(item)}
                 />
               );
             })}
@@ -212,7 +249,7 @@ const Home = () => {
             setOpenAddEditModal({ isShown: false, type: "add", data: null });
           }}
           showToastMessage={showToastMessage}
-          getAllNotes={getAllNotes}
+          //getAllNotes={dispatch(fetchNotes())}
         />
       </Modal>
 
