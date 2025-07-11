@@ -39,7 +39,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/google/callback",
+      callbackURL: "https://bingung.servebeer.com/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       let user = await User.findOne({ googleId: profile.id });
@@ -301,7 +301,7 @@ app.get("/get-all-notes", authenticateToken, async (req, res) => {
     const notes = await Note.find({ userId: user._id })
       .sort({ isPinned: -1 })
       .skip((page - 1) * limit)
-      .limit(limit)
+      .limit(limit);
 
     return res.json({
       error: false,
@@ -401,8 +401,8 @@ app.get("/verify-email", async (req, res) => {
   res.send("Email verified successfully! You can now log in.");
 });
 
-app.listen(3000, '0.0.0.0', () => {
-  console.log("Server running on port 3000")
+app.listen(3000, "0.0.0.0", () => {
+  console.log("Server running on port 3000");
 });
 
 module.exports = app;
