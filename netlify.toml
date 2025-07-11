@@ -1,6 +1,4 @@
 [build]
-    # Navigate to the frontend directory and run the build command
-    command = "cd frontend/note-app && npm run build"
-
-    # Directory with built files 
-    public = "frontend/note-app/dist"
+  base = "frontend/notes-app"
+  command = "npm run build"
+  publish = "dist"
