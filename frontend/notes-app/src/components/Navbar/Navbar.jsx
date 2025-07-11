@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import SearchBar from "../SearchBar/SearchBar";
 import ProfileInfo from "../Cards/ProfileInfo";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Navbar = ({ userInfo, onSearchNote, handleClearSearch }) => {
   const isToken = localStorage.getItem("token");
-
   const [searchQuery, setSearchQuery] = useState("");
-
   const navigate = useNavigate();
+  const location = useLocation();
 
   const onLogout = () => {
     localStorage.clear();
@@ -16,15 +15,19 @@ const Navbar = ({ userInfo, onSearchNote, handleClearSearch }) => {
   };
 
   const handleSearch = () => {
-    if(searchQuery){
-      onSearchNote(searchQuery)
+    if (searchQuery) {
+      onSearchNote(searchQuery);
     }
   };
 
-  const onClearSearch = ()=>{
-    handleClearSearch()
-    setSearchQuery("")
-  }
+  const onClearSearch = () => {
+    handleClearSearch();
+    setSearchQuery("");
+  };
+
+  // Only show search bar on dashboard page ("/" or "/dashboard")
+  const isDashboard =
+    location.pathname === "/" || location.pathname === "/dashboard";
 
   return (
     <div className="bg-white flex items-center justify-between px-6 py-2 drop-shadow">
@@ -32,14 +35,16 @@ const Navbar = ({ userInfo, onSearchNote, handleClearSearch }) => {
 
       {isToken && (
         <>
-          <SearchBar
-            value={searchQuery}
-            onChange={({ target }) => {
-              setSearchQuery(target.value);
-            }}
-            handleSearch={handleSearch}
-            onClearSearch={onClearSearch}
-          />
+          {isDashboard && (
+            <SearchBar
+              value={searchQuery}
+              onChange={({ target }) => {
+                setSearchQuery(target.value);
+              }}
+              handleSearch={handleSearch}
+              onClearSearch={onClearSearch}
+            />
+          )}
 
           <ProfileInfo userInfo={userInfo} onLogout={onLogout} />
         </>
