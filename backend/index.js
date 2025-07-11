@@ -108,7 +108,7 @@ app.post("/create-account", async (req, res) => {
     },
   });
 
-  const verifyUrl = `http://ec2-13-236-119-165.ap-southeast-2.compute.amazonaws.com/verify-email?token=${verificationToken}`;
+  const verifyUrl = `https://bingung.servebeer.com/verify-email?token=${verificationToken}`;
 
   await transporter.sendMail({
     from: `"Notes App" <${process.env.EMAIL_USER}>`,
