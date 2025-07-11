@@ -294,7 +294,7 @@ app.put("/update-note-pinned/:noteId", authenticateToken, async (req, res) => {
 app.get("/get-all-notes", authenticateToken, async (req, res) => {
   const { user } = req.user;
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 18;
+  const limit = parseInt(req.query.limit) || 15;
 
   try {
     const total = await Note.countDocuments({ userId: user._id });
