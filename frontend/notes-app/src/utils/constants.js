@@ -1,1 +1,1 @@
-export const BASE_URL = 'http://localhost:8000'
+export const BASE_URL = 'http://ec2-13-236-119-165.ap-southeast-2.compute.amazonaws.com/'
