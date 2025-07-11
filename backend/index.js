@@ -401,6 +401,8 @@ app.get("/verify-email", async (req, res) => {
   res.send("Email verified successfully! You can now log in.");
 });
 
-app.listen(8000);
+app.listen(8000, '0.0.0.0', () => {
+  console.log("Server running on port 8000")
+});
 
 module.exports = app;
