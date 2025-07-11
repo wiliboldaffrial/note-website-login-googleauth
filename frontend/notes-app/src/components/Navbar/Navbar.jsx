@@ -31,24 +31,26 @@ const Navbar = ({ userInfo, onSearchNote, handleClearSearch }) => {
 
   return (
     <div className="bg-white flex items-center justify-between px-6 py-2 drop-shadow">
-      <h2 className="text-xl font-medium text-black py-2">Notes</h2>
-
-      {isToken && (
-        <>
-          {isDashboard && (
-            <SearchBar
-              value={searchQuery}
-              onChange={({ target }) => {
-                setSearchQuery(target.value);
-              }}
-              handleSearch={handleSearch}
-              onClearSearch={onClearSearch}
-            />
-          )}
-
+      <div className="flex-1 flex items-center">
+        <h2 className="text-xl font-medium text-black py-2">Notes</h2>
+      </div>
+      <div className="flex-1 flex justify-center">
+        {isDashboard && (
+          <SearchBar
+            value={searchQuery}
+            onChange={({ target }) => {
+              setSearchQuery(target.value);
+            }}
+            handleSearch={handleSearch}
+            onClearSearch={onClearSearch}
+          />
+        )}
+      </div>
+      <div className="flex-1 flex justify-end">
+        {isDashboard && (
           <ProfileInfo userInfo={userInfo} onLogout={onLogout} />
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 };
