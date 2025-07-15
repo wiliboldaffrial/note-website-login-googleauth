@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import AddNotesImg from "../../assets/images/add-notes.svg";
 import NoDataImg from "../../assets/images/no-data.svg";
 import EmptyCard from "../../components/EmptyCard/EmptyCard";
+import Masonry from "react-masonry-css";
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   if (totalPages <= 1) return null;
@@ -60,13 +61,13 @@ const Home = () => {
   const userInfo = useSelector((state) => state.notes.userInfo);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const notesPerPage = 16;
+  const notesPerPage = 9;
 
   const indexOfLastNote = currentPage * notesPerPage;
   const indexOfFirstNote = indexOfLastNote - notesPerPage;
   const currentNotes = allNotes.slice(indexOfFirstNote, indexOfLastNote);
   const [page, setPage] = useState(1);
-  const [limit] = useState(16);
+  const [limit] = useState(9);
   const totalPages = useSelector((state) => state.notes.totalPages);
 
   const navigate = useNavigate();
@@ -102,38 +103,6 @@ const Home = () => {
     });
   };
 
-  // Get all notes 
-  /*
-  const getAllNotes = async () => {
-    try {
-      const response = await axiosInstance.get("/get-all-notes");
-
-      if (response.data && response.data.notes) {
-        setAllNotes(response.data.notes);
-      }
-    } catch (error) {
-      console.log("An unexpected error occurred. Please try again.");
-    }
-  };
-  */
-
-  // Delete 
-  /*
-  const deleteNote = async (data) => {
-    const noteId = data._id;
-    try {
-      const response = await axiosInstance.delete("/delete-note/" + noteId);
-
-      if (response.data && !response.data.error) {
-        showToastMessage("Note Deleted Successfully", "delete");
-        getAllNotes();
-      }
-    } catch (error) {
-      console.log("An unexpected error occurred. Please try again.");
-    }
-  };
-  */
-
   //updated deleteNoteHandler
   const handleDelete = async (note) => {
     dispatch(deleteNote(note._id));
@@ -155,72 +124,10 @@ const Home = () => {
     dispatch(fetchNotes());
   }
 
-  // Get User Info
-  /*
-  const getUserInfo = async () => {
-    try {
-      const response = await axiosInstance.get("/get-user");
-      if (response.data && response.data.user) {
-        setUserInfo(response.data.user);
-      }
-    } catch (error) {
-      if (error.response.status === 401) {
-        localStorage.clear();
-        navigate("/login");
-      }
-    }
-  };
-  */
-
-  // Search for a Note
-  /*
-  const onSearchNote = async (query) => {
-    try {
-      const response = await axiosInstance.get("/search-notes", {
-        params: { query },
-      });
-
-      if (response.data && response.data.notes) {
-        setIsSearch(true);
-        setAllNotes(response.data.notes);
-      }
-    } catch (error) {
-      console.log("An unexpected error occurred. Please try again.");
-    }
-  };
-  */
-/*
-  const updateIsPinned = async (noteData) => {
-    const noteId = noteData._id;
-
-    try {
-      const response = await axiosInstance.put(
-        "/update-note-pinned/" + noteId,
-        {
-          isPinned: !noteData.isPinned,
-        }
-      );
-
-      if (response.data && response.data.note) {
-        showToastMessage("Note Updated Successfully", "update");
-        getAllNotes();
-      }
-    } catch (error) {
-      console.log("An unexpected error occurred. Please try again.");
-    }
-  };
-*/
-
-/*
-  const handleClearSearch = () => {
-    setIsSearch(false);
-    getAllNotes();
-  };
-*/
-
   useEffect(() => {
     dispatch(fetchNotes({page, limit})); 
     dispatch(fetchUser()); 
+    dispatch(clearSearch());
     
   }, [dispatch, page, limit]);
 
@@ -241,22 +148,27 @@ const Home = () => {
           <>
             <h3 className="text-lg font-medium mt-5">Search Results</h3>
             {currentNotes.length > 0 ? (
-              <div className="grid grid-cols-3 gap-4 mt-8">
-                {currentNotes.map((item) => (
-                  <NoteCard
-                    key={item._id}
-                    title={item.title}
-                    content={item.content}
-                    date={item.createdOn}
-                    tags={item.tags}
-                    isPinned={item.isPinned}
-                    image={item.image}
-                    onEdit={() => handleEdit(item)}
-                    onDelete={() => handleDelete(item)}
-                    onPinNote={() => handlePinToggle(item)}
-                  />
-                ))}
-              </div>
+              <Masonry
+  breakpointCols={{ default: 3, 768: 2, 500: 1 }}
+  className="flex gap-4"
+  columnClassName="my-masonry-column"
+>
+  {currentNotes.map((item) => (
+    <NoteCard
+      key={item._id}
+      title={item.title}
+      content={item.content}
+      date={item.createdOn}
+      tags={item.tags}
+      isPinned={item.isPinned}
+      image={item.image}
+      onEdit={() => handleEdit(item)}
+      onDelete={() => handleDelete(item)}
+      onPinNote={() => handlePinToggle(item)}
+    />
+  ))}
+</Masonry>
+
             ) : (
               <EmptyCard
                 imgSrc={NoDataImg}
@@ -268,22 +180,27 @@ const Home = () => {
           <>
             <h3 className="text-lg font-medium mt-5">All Notes</h3>
             {currentNotes.length > 0 ? (
-              <div className="grid grid-cols-3 gap-4 mt-8">
-                {currentNotes.map((item) => (
-                  <NoteCard
-                    key={item._id}
-                    title={item.title}
-                    content={item.content}
-                    date={item.createdOn}
-                    tags={item.tags}
-                    isPinned={item.isPinned}
-                    image={item.image}
-                    onEdit={() => handleEdit(item)}
-                    onDelete={() => handleDelete(item)}
-                    onPinNote={() => handlePinToggle(item)}
-                  />
-                ))}
-              </div>
+              <Masonry
+  breakpointCols={{ default: 3, 768: 2, 500: 1 }}
+  className="flex gap-4"
+  columnClassName="my-masonry-column"
+>
+  {currentNotes.map((item) => (
+    <NoteCard
+      key={item._id}
+      title={item.title}
+      content={item.content}
+      date={item.createdOn}
+      tags={item.tags}
+      isPinned={item.isPinned}
+      image={item.image}
+      onEdit={() => handleEdit(item)}
+      onDelete={() => handleDelete(item)}
+      onPinNote={() => handlePinToggle(item)}
+    />
+  ))}
+</Masonry>
+
             ) : (
               <EmptyCard
                 imgSrc={AddNotesImg}

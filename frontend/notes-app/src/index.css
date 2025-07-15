@@ -31,4 +31,11 @@
   .input-label {
     @apply text-xs text-slate-400;
   }
+
+  .my-masonry-column {
+  background-clip: padding-box;
+}
+.my-masonry-column > div {
+  margin-bottom: 1rem;
+}
 }

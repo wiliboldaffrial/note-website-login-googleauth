@@ -109,7 +109,7 @@ const notesSlice = createSlice({
             state.status = 'succeeded';
             state.allNotes = action.payload.notes;
             state.totalPages = action.payload.totalPages;
-            state.isSearch = true;
+            state.isSearch = false;
         })
         .addCase(fetchNotes.rejected, (state, action) => {
             state.status = 'failed';
