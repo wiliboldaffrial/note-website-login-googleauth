@@ -2,3 +2,9 @@
 /backend/.env
 /backend/package-lock.json
 /backend/dist
+
+/frontend/notes-app/node_modules
+/frontend/notes-app/.env
+/frontend/notes-app/package-lock.json
+/frontend/notes-app/notes-app/package-lock.json
+/frontend/notes-app/dist
