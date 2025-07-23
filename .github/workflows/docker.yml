@@ -18,4 +18,4 @@
            with: 
              context: . 
              push: true 
-             tags: yourname/app:latest
+             tags: samuelchristofel/app:latest
